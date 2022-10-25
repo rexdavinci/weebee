@@ -1,3 +1,4 @@
+import { Op } from 'sequelize'
 import Event from './entities/event.entity';
 import Workshop from './entities/workshop.entity';
 
@@ -87,12 +88,12 @@ export class EventsService {
 
   async getEventsWithWorkshops() {
 
-    const result = await Event.findAll({ raw: true })
+    const events = await Event.findAll({ raw: true })
 
-    const withWorkshop = await Promise.all(result.map(async(evt: Event) => {
+    const withWorkshop = await Promise.all(events.map(async (evt: Event) => {
       const workshops = await Workshop.findAll({ where: { eventId: evt.id }, raw: true })
-      if(workshops.length > 0) {
-        return {...evt, workshops }
+      if (workshops.length > 0) {
+        return { ...evt, workshops }
       }
     }))
 
@@ -166,6 +167,13 @@ export class EventsService {
     ```
      */
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    const events = await Event.findAll({ raw: true })
+
+    const futureWorkshops = await Promise.all(events.map(async (evt: Event) => {
+      const workshops = await Workshop.findAll({ where: { eventId: evt.id, start: { [Op.gt]: new Date() } }, raw: true })
+        return{ ...evt, workshops }
+    }));
+
+    return futureWorkshops.filter(evt => evt.workshops.length > 0)
   }
 }
