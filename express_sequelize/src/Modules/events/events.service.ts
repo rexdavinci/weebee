@@ -1,4 +1,5 @@
 import Event from './entities/event.entity';
+import Workshop from './entities/workshop.entity';
 
 
 export class EventsService {
@@ -85,7 +86,17 @@ export class EventsService {
      */
 
   async getEventsWithWorkshops() {
-    throw new Error('TODO task 1');
+
+    const result = await Event.findAll({ raw: true })
+
+    const withWorkshop = await Promise.all(result.map(async(evt: Event) => {
+      const workshops = await Workshop.findAll({ where: { eventId: evt.id }, raw: true })
+      if(workshops.length > 0) {
+        return {...evt, workshops }
+      }
+    }))
+
+    return withWorkshop
   }
 
   /* TODO: complete getFutureEventWithWorkshops so that it returns events with workshops, that have not yet started
